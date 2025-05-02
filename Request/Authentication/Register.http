@@ -1,0 +1,17 @@
+@host  = http://localhost:5152
+
+### Register new user
+POST {{host}}/auth/register
+Accept: application/json
+Content-Type: application/json
+
+{
+  "firstName": "Napon",
+  "lastName": "Tan",
+  "email": "ponpon13173@gmail.com",
+  "password": "1q2w3e4r"
+}
+###
+
+GET {{host}}/weatherforecast/
+Accept: application/json
