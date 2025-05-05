@@ -1,3 +1,4 @@
+using BuberDinner.Api.Filters;
 using BuberDinner.Application.Common.Interfaces.Authentication;
 using BuberDinner.Application.Common.Interfaces.Persistence;
 using BuberDinner.Domain.Entities;
@@ -19,12 +20,13 @@ namespace BuberDinner.Application.Services.Authentication
             // 1) Validate user exist 
             if(_userRepository.GetUserByEmail(email) is not User user)
             {
-                throw new Exception("User with given email does not exist.");
+                // ถึงจะ throw Exception แบบนี้ออกไปมันก็ยังโชว์ error อื่นๆของระบบด้วย
+                throw new NotFoundException("User with given email does not exist.");
             }
             // 2) Validate password is correct
             if(user.Password != password)
             {
-                throw new Exception("Invalid Password.");
+                throw new UnauthorizedException("Invalid Password.");
             }
             // 3) Create JWT token
             var token = _jwtTokenGenerator.GenerateToken(user);
@@ -38,7 +40,7 @@ namespace BuberDinner.Application.Services.Authentication
         {
             // 1. Validate user doesn't exist
             if(_userRepository.GetUserByEmail(email) is not null){
-                throw new Exception("User given email already exists");
+                throw new BadRequestException("User given email already exists");
             }
 
             // 2. Create user (generate unique ID) & Persist to DB
