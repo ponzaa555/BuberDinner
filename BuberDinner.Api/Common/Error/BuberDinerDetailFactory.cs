@@ -76,8 +76,8 @@ namespace BuberDinner.Api.Error
             problemDetails.Status ??= statusCode;
             if (_options.ClientErrorMapping.TryGetValue(statusCode , out var clientError))
             {
-                problemDetails.Title = clientError.Title;
-                problemDetails.Type = clientError.Link;
+                problemDetails.Title ??= clientError.Title;
+                problemDetails.Type ??= clientError.Link;
             }
             var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
             if(traceId != null)

@@ -1,9 +1,8 @@
-
-using BuberDinner.Api.Filters;
+using BuberDinner.Application.Common.Errors.OneOF;
 using BuberDinner.Application.Services.Authentication;
 using BuberDinner.Contracts;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OneOf;
 
 namespace BuberDinner.Api.Controller
 {
@@ -22,23 +21,42 @@ namespace BuberDinner.Api.Controller
        [HttpPost("register")]
        public IActionResult Register([FromBody]RegisterRequest request )
        {
-            var authResult = _authenticationService.Register(
+            OneOf<AuthenticationResult , IError> registerResult = _authenticationService.Register(
                request.FirstName,
                request.LastName,
                request.Email,
                request.Password
             );
-            var response = new AuthenticationResponse(
-               authResult.User.Id,
-               authResult.User.FirstName,
-               authResult.User.LastName,
-               authResult.User.Email,
-               authResult.Token
+            
+            /*
+            if(registerResult.IsT0)
+            {
+                var authResult = registerResult.AsT0;
+                AuthenticationResponse response = MapAuthResult(authResult);
+                return Ok(response);
+            } 
+            return Problem(statusCode: StatusCodes.Status409Conflict, title: "Email already exists");
+            อ่านค่อนข้างยาก สามารถแปลงเป็นแบบนี้ได้ ด้านล่าง 
+            */
+            // คือ เราจะใช้ OneOf<T0, T1> ลำดับ ของ T0 และ T1 จะต้องตรงกันdับกับ function ไหน match ถ้า T0 ถูกต้องจะไปที่ authResult
+            return registerResult.Match(
+               authResult => Ok(MapAuthResult(authResult)),
+               error => Problem( statusCode: (int)error.StatusCode, title: error.Message)
             );
-            return Ok(response);
        }
-       
-       [HttpPost("login")]
+
+        private static AuthenticationResponse MapAuthResult(AuthenticationResult authResult)
+        {
+            return new AuthenticationResponse(
+                              authResult.User.Id,
+                              authResult.User.FirstName,
+                              authResult.User.LastName,
+                              authResult.User.Email,
+                              authResult.Token
+                           );
+        }
+
+        [HttpPost("login")]
        public IActionResult Login (LoginRequest request)
        {
           var loginResult = _authenticationService.Login(request.Email , request.Password);
