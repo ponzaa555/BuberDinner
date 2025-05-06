@@ -1,7 +1,9 @@
 
 using BuberDinner.Api.Filters;
+using BuberDinner.Application.Common.Interfaces.Error;
 using BuberDinner.Application.Services.Authentication;
 using BuberDinner.Contracts;
+using FluentResults;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,24 +23,39 @@ namespace BuberDinner.Api.Controller
 
        [HttpPost("register")]
        public IActionResult Register([FromBody]RegisterRequest request )
-       {
-            var authResult = _authenticationService.Register(
+        {
+            Result<AuthenticationResult> registerResult = _authenticationService.Register(
                request.FirstName,
                request.LastName,
                request.Email,
                request.Password
             );
-            var response = new AuthenticationResponse(
-               authResult.User.Id,
-               authResult.User.FirstName,
-               authResult.User.LastName,
-               authResult.User.Email,
-               authResult.Token
+            if(registerResult.IsSuccess)
+            {
+               return Ok(MapAuthResult(registerResult.Value));
+            }
+            var firstError = registerResult.Errors[0];
+
+            if (firstError is DuplicateEmailError)
+            {
+                return Problem(statusCode: StatusCodes.Status409Conflict,title: "Duplicate Email",detail: "User with given email already exists.");
+            }
+
+            return Problem();
+        }
+
+        private static AuthenticationResponse MapAuthResult(AuthenticationResult registerResult)
+        {
+            return new AuthenticationResponse(
+               registerResult.User.Id,
+               registerResult.User.FirstName,
+               registerResult.User.LastName,
+               registerResult.User.Email,
+               registerResult.Token
             );
-            return Ok(response);
-       }
-       
-       [HttpPost("login")]
+        }
+
+        [HttpPost("login")]
        public IActionResult Login (LoginRequest request)
        {
           var loginResult = _authenticationService.Login(request.Email , request.Password);
