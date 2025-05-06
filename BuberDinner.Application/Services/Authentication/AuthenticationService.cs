@@ -1,7 +1,9 @@
 using BuberDinner.Api.Filters;
 using BuberDinner.Application.Common.Interfaces.Authentication;
 using BuberDinner.Application.Common.Interfaces.Persistence;
+using BuberDinner.Domain.Common.Errors;
 using BuberDinner.Domain.Entities;
+using ErrorOr;
 
 namespace BuberDinner.Application.Services.Authentication
 {
@@ -15,18 +17,18 @@ namespace BuberDinner.Application.Services.Authentication
             _jwtTokenGenerator = jwtTokenGenerator;
             _userRepository = userRepository;
         }
-        public AuthenticationResult Login(string email, string password)
+        public ErrorOr<AuthenticationResult> Login(string email, string password)
         {
             // 1) Validate user exist 
             if(_userRepository.GetUserByEmail(email) is not User user)
             {
                 // ถึงจะ throw Exception แบบนี้ออกไปมันก็ยังโชว์ error อื่นๆของระบบด้วย
-                throw new NotFoundException("User with given email does not exist.");
+                return Errors.Authentication.InvalidCredential;
             }
             // 2) Validate password is correct
             if(user.Password != password)
             {
-                throw new UnauthorizedException("Invalid Password.");
+                return new[] {Errors.Authentication.InvalidCredential};
             }
             // 3) Create JWT token
             var token = _jwtTokenGenerator.GenerateToken(user);
@@ -36,11 +38,11 @@ namespace BuberDinner.Application.Services.Authentication
             );
         }
 
-        public AuthenticationResult Register(string firstName, string lastName, string email, string password)
+        public ErrorOr<AuthenticationResult> Register(string firstName, string lastName, string email, string password)
         {
             // 1. Validate user doesn't exist
             if(_userRepository.GetUserByEmail(email) is not null){
-                throw new BadRequestException("User given email already exists");
+                return Errors.User.DuplicateEmail;
             }
 
             // 2. Create user (generate unique ID) & Persist to DB
