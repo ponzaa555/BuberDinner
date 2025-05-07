@@ -90,7 +90,7 @@ public class  BuberDinerDetailFactory : ProblemDetailsFactory
         var errors = context?.Items[HttpContextItemKeys.Errors] as List<Error>;
         if(errors is not null)
         {
-            problemDetails.Extensions.Add("errorsCodes" , errors.Select(e => e.Code));
+            problemDetails.Extensions.Add("errorsCodes" , errors.Select(e => $"{e.Code} : {e.Description}"));
         }
     }
 }

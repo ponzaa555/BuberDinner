@@ -35,7 +35,7 @@ var app = builder.Build();
 */
 {
     //ถ้า มีการ throw exception ใน controller จะ call ไปที่ controller error
-    app.UseExceptionHandler("/error");
+    // app.UseExceptionHandler("/error");
     app.UseHttpsRedirection();
     app.MapControllers();
     app.Run();
