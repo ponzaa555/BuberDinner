@@ -1,3 +1,4 @@
+using BuberDinner.Api;
 using BuberDinner.Api.Common.Errors;
 using BuberDinner.Application;
 using BuberDinner.Infrastructure;
@@ -10,13 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add dependency Injection
 {
-    // option => option.Filters.Add<ErrorHandlingFilterAttribute>() add ErrorHandlingFilter to all controller
-    // builder.Services.AddControllers(option => option.Filters.Add<ErrorFilterProblemDetail>());
-    builder.Services.AddControllers();
-    //services.TryAddSingleton<ProblemDetailsFactory, DefaultProblemDetailsFactory>();
-    // แก้ base libery ของ C# 
-    builder.Services.AddSingleton<ProblemDetailsFactory, BuberDinerDetailFactory>();
     builder.Services
+        .AddPresentation() 
         .AddApplication()
         // Pass config to Interface layers
         .AddInfrastructure(builder.Configuration);

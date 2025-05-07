@@ -4,6 +4,7 @@ using BuberDinner.Application.Services.Authentication.Common;
 using BuberDinner.Contracts;
 using BuberDinner.Domain.Common.Errors;
 using ErrorOr;
+using MapsterMapper;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,18 +16,17 @@ namespace BuberDinner.Api.Controller
     public class AuthenticationController : ApiController
     {
      private readonly ISender _mediator;
-     public AuthenticationController(ISender mediator )
+     private readonly IMapper _mapper;
+     public AuthenticationController(ISender mediator , IMapper mapper)
      {
+      _mapper = mapper;
       _mediator = mediator;    
      }
 
        [HttpPost("register")]
        public async Task<IActionResult> Register([FromBody]RegisterRequest request )
         {
-            var command  = new RegisterCommand(request.FirstName,
-               request.LastName,
-               request.Email,
-               request.Password);            
+            var command  = _mapper.Map<RegisterCommand>(request);       
             ErrorOr<AuthenticationResult> authResult = await _mediator.Send(command);
            return authResult.Match(
                   authResult1 => Ok(MapAuth(authResult1)),
@@ -38,14 +38,15 @@ namespace BuberDinner.Api.Controller
         [HttpPost("login")]
        public async  Task<IActionResult> Login (LoginRequest request)
        {
-         var Query = new LoginQuery(request.Email, request.Password);
-          ErrorOr<AuthenticationResult>loginResult = _mediator.Send(Query).Result;
+         var Query = _mapper.Map<LoginQuery>(request);
+          ErrorOr<AuthenticationResult>loginResult = await _mediator.Send(Query);
          if(loginResult.IsError && loginResult.FirstError == Errors.Authentication.InvalidCredential)
          {
             return Problem(statusCode: StatusCodes.Status401Unauthorized ,  title: loginResult.FirstError.Description);
          }
           return loginResult.Match(
-            loginResult => Ok(MapAuth(loginResult)),
+            // AuthenticationResponse กับ loginResult struct ไม่เหมือนกััน
+            loginResult => Ok(_mapper.Map<AuthenticationResponse>(loginResult)),
             errors => Problem(errors)
           );
        }
