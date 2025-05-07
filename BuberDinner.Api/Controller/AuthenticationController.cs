@@ -27,16 +27,16 @@ namespace BuberDinner.Api.Controller
        public async Task<IActionResult> Register([FromBody]RegisterRequest request )
         {
             var command  = _mapper.Map<RegisterCommand>(request);       
-            var errors = new List<Error>
-        {
-            Error.Validation("InvalidEmail", "Email must be a valid email address."),
-            Error.Validation("WeakPassword", "Password must be at least 8 characters.")
-        };
+        //     var errors = new List<Error>
+        // {
+        //     Error.Validation("InvalidEmail", "Email must be a valid email address."),
+        //     Error.Validation("WeakPassword", "Password must be at least 8 characters.")
+        // };
 
             ErrorOr<AuthenticationResult> authResult = await _mediator.Send(command);
            return authResult.Match(
                   authResult1 => Ok(MapAuth(authResult1)),
-                  _ => Problem(errors)
+                  errors => Problem(errors)
            );
         }
 

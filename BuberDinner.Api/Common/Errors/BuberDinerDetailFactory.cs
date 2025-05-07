@@ -91,6 +91,6 @@ public class  BuberDinerDetailFactory : ProblemDetailsFactory
         if(errors is not null)
         {
             problemDetails.Extensions.Add("errorsCodes" , errors.Select(e => $"{e.Code} : {e.Description}"));
-        }
+        } 
     }
 }
