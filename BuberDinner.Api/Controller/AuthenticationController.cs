@@ -6,11 +6,13 @@ using BuberDinner.Domain.Common.Errors;
 using ErrorOr;
 using MapsterMapper;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BuberDinner.Api.Controller
 {
     [Route("auth")]
+    [AllowAnonymous]
     // this apply ErrorHandlingFilter to all AuthController
     //[ErrorHandlingFilter]
     public class AuthenticationController : ApiController

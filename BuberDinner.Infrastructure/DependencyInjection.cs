@@ -7,8 +7,11 @@ using BuberDinner.Application.Services.Authentication;
 using BuberDinner.Infrastructure.Authentication;
 using BuberDinner.Infrastructure.Persistence;
 using BuberDinner.Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BuberDinner.Infrastructure
 {
@@ -19,11 +22,38 @@ namespace BuberDinner.Infrastructure
             IConfiguration configuration 
         )
         {
-            services.Configure<JwtSetting>(configuration.GetSection(JwtSetting.SectionName));
-            services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+            services.AddAuth(configuration);
             services.AddSingleton<IDateTimeProvider , DateTimeProvider>();
+
             services.AddScoped<IUserRepository , UserRepository>();
             return services;
         }
-    }
+        public static IServiceCollection AddAuth(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            // setUp JWT
+            var JwtSetting = new JwtSetting();
+            configuration.Bind(JwtSetting.SectionName,JwtSetting);
+            // services.Configure<JwtSetting>(configuration.GetSection(JwtSetting.SectionName));
+            services.AddSingleton(Options.Create(JwtSetting));
+
+            services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+
+            // configure authentication 
+            services.AddAuthentication(defaultScheme: JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options => options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = JwtSetting.Issuer,
+                    ValidAudience = JwtSetting.Audience,
+                    IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                        System.Text.Encoding.UTF8.GetBytes(JwtSetting.Secret)),
+                });
+            return services;
+        }
+    } 
 }
